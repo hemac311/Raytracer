@@ -47,7 +47,8 @@ public:
 		std::shared_ptr<Image> finalImage = m_Renderer.GetFinalImage();
 		if (finalImage)
 		{
-			ImGui::Image(finalImage->GetDescriptorSet(), { (float)finalImage->GetWidth(), (float)finalImage->GetHeight() });
+			ImGui::Image(finalImage->GetDescriptorSet(), { (float)finalImage->GetWidth(), (float)finalImage->GetHeight()},
+			ImVec2(0,1), ImVec2(1,0));
 		}
 
 		ImGui::End();
