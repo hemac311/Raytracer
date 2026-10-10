@@ -2,8 +2,9 @@
 #include "Walnut/EntryPoint.h"
 #include <iostream>
 #include "Walnut/Image.h"
-#include "Walnut/Random.h"
 #include "Walnut/Timer.h"
+
+#include "Renderer.h"
 
 using namespace Walnut;
 
@@ -43,9 +44,10 @@ public:
 		m_ViewportWidth = ImGui::GetContentRegionAvail().x;
 		m_ViewportHeight = ImGui::GetContentRegionAvail().y;
 
-		if (m_Image)
+		std::shared_ptr<Image> finalImage = m_Renderer.GetFinalImage();
+		if (finalImage)
 		{
-			ImGui::Image(m_Image->GetDescriptorSet(), { (float)m_Image->GetWidth(), (float)m_Image->GetHeight() });
+			ImGui::Image(finalImage->GetDescriptorSet(), { (float)finalImage->GetWidth(), (float)finalImage->GetHeight() });
 		}
 
 		ImGui::End();
@@ -61,43 +63,15 @@ public:
 	{
 		
 		Timer timer;
+
+		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
+		m_Renderer.Render();
 		
-		if (!m_Image || m_ViewportWidth != m_Image->GetWidth() || m_ViewportHeight != m_Image->GetHeight()) 
-		{
-			m_Image = std::make_shared<Image>(m_ViewportWidth,m_ViewportHeight, ImageFormat::RGBA);
-			m_ImageBuffer.resize(m_ViewportWidth * m_ViewportHeight);
-		}
-
-		float center_x = m_ViewportWidth / 2;
-		float center_y = m_ViewportHeight / 2;
-		float radius = 64000;
-		
-
-		for (uint32_t x = 0; x < m_ViewportWidth; x++)
-		{
-			float dx = x - center_x;
-			
-			for (uint32_t y = 0; y < m_ViewportHeight; y++)
-			{
-				//float dx = x - center_x;
-				if (dx*dx + (y-center_y)*(y-center_y) < radius)
-				{
-					m_ImageBuffer[x  + y * m_ViewportWidth] = Random::UInt();
-					m_ImageBuffer[x + y * m_ViewportWidth] |= 0xff000000;
-				}
-				else
-				{
-					m_ImageBuffer[x + y * m_ViewportWidth] = 0x00000000;
-				}
-			}
-		}
-
-		m_Image->SetData(m_ImageBuffer.data());
 		m_LastRender = timer.ElapsedMillis();
 
 	}
 private:
-	std::shared_ptr<Image> m_Image;
+	Renderer m_Renderer;
 	float m_LastRender = 0.0f;
 	bool m_StartRender = false;
 
