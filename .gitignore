@@ -1,4 +1,7 @@
 *.vs
+*.vcxproj
+bin-int/
+
 
 # Prerequisites
 *.d

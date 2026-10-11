@@ -11,8 +11,11 @@ using namespace Walnut;
 class ExampleLayer : public Walnut::Layer
 {
 public:
+
 	virtual void OnUIRender() override
 	{
+
+
 		ImGui::Begin("Viewport Settings");
 
 		if (ImGui::Button("Start Render"))
@@ -32,6 +35,10 @@ public:
 		{
 			m_StartRender = false;
 		}
+
+		ImGui::SliderFloat("lightPos X", &m_Renderer.lightPosX, -5.0f, 5.0f);
+		ImGui::SliderFloat("lightPos Y", &m_Renderer.lightPosY, -5.0f, 5.0f);
+		ImGui::SliderFloat("lightPos Z", &m_Renderer.lightPosZ, -5.0f, 5.0f);
 
 		ImGui::End();
 
@@ -62,7 +69,6 @@ public:
 
 	void Render()
 	{
-		
 		Timer timer;
 
 		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
@@ -75,8 +81,6 @@ private:
 	Renderer m_Renderer;
 	float m_LastRender = 0.0f;
 	bool m_StartRender = false;
-
-	//std::shared_ptr<uint32_t> m_TestBuffer;
 
 	uint32_t m_ViewportWidth = 0;
 	uint32_t m_ViewportHeight = 0;
