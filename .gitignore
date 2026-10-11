@@ -1,5 +1,7 @@
 *.vs
 *.vcxproj
+*.vcxproj.user
+*.ini
 bin-int/
 
 
