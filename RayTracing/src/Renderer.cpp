@@ -2,6 +2,18 @@
 #include "Walnut/Random.h"
 #include <cmath>
 
+namespace Utils
+{
+	static uint32_t ConvertToRGBA(const glm::vec4& color)
+	{
+		uint8_t r = (color.r * 255.0f);
+		uint8_t g = (color.g * 255.0f);
+		uint8_t b = (color.b * 255.0f);
+		uint8_t a = (color.a * 255.0f);
+
+		return (a << 24) | (b << 16) | (g << 8) | r;
+	}
+}
 
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
@@ -24,9 +36,10 @@ void Renderer::Render()
 {
 	uint32_t imageWidth = m_FinalImage->GetWidth();
 	uint32_t imageHeight = m_FinalImage->GetHeight();
+	float aspect = (float)imageWidth / (float)imageHeight;
+
 
 	glm::vec3 rayOrigin(0.0f, 0.0f, 1.0f);
-	float aspect = (float)imageWidth / (float)imageHeight;
 
 	glm::vec3 lightDir(lightPosX, lightPosY, lightPosZ);
 	lightDir = glm::normalize(lightDir);
@@ -37,12 +50,14 @@ void Renderer::Render()
 	{
 		for (uint32_t x = 0; x < imageWidth; x++)
 		{
-			glm::vec2 coord = { (float)x / m_FinalImage->GetWidth(),(float)y / m_FinalImage->GetHeight()};
+			glm::vec2 coord = { (float)x / imageWidth,(float)y / imageHeight};
 			coord = coord * 2.0f - 1.0f; // map from -1 to 1
 			int pos = x + y * imageWidth;
 			glm::vec3 rayDirection(coord.x * aspect, coord.y, -1.0f);
 			rayDirection = glm::normalize(rayDirection);
-			m_ImageBuffer[pos] = PixelShader(rayOrigin, rayDirection, lightDir);
+			glm::vec4 color = PixelShader(rayOrigin, rayDirection, lightDir);
+			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+			m_ImageBuffer[pos] = Utils::ConvertToRGBA(color);
 		}
 	}
 	m_FinalImage->SetData(m_ImageBuffer.data());
@@ -54,7 +69,7 @@ std::shared_ptr<Walnut::Image> Renderer::GetFinalImage()
 	return m_FinalImage;
 }
 
-uint32_t Renderer::PixelShader(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 lightDir)
+glm::vec4 Renderer::PixelShader(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 lightDir)
 {
 	// Ray Tracing
 	float radius = 0.5;
@@ -70,27 +85,27 @@ uint32_t Renderer::PixelShader(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm:
 
 	if (discriminant >= 0)
 	{
-		float t0 = (-b + std::sqrt(discriminant)) / (2.0f * a); //quadratic formular, first result
-		float t1 = (-b - std::sqrt(discriminant)) / (2.0f * a);
+		//float t0 = (-b + std::sqrt(discriminant)) / (2.0f * a); 
+		float t1 = (-b - std::sqrt(discriminant)) / (2.0f * a); //quadratic formular, first hit
 
-		glm::vec3 hitLoc1 = rayOrigin + rayDirection * t0;
+		//glm::vec3 hitLoc1 = rayOrigin + rayDirection * t0;
 		glm::vec3 hitLoc2 = rayOrigin + rayDirection * t1;
+		 
+		glm::vec3 normal = glm::normalize(hitLoc2 - sphereOrigin);
 
-		glm::vec3 normal = hitLoc2 - sphereOrigin;
-		normal = glm::normalize(normal);
-
-		uint8_t lightShading = (uint8_t)(((glm::dot(normal, lightDir)) * 0.5f + 0.5f) * 180.0f);
+		float lightShading = std::max(0.0f,(((glm::dot(normal, -lightDir)) * 0.5f + 0.5f)));
 		
 		// Preview Normals:
-		//uint8_t shadingX = (uint8_t)((float)(normal.x * 0.5f + 0.5f) * 180.0f);
-		//uint8_t shadingY = (uint8_t)((float)(normal.y * 0.5f + 0.5f) * 180.0f);
-		//uint8_t shadingZ = (uint8_t)((float)(normal.z * 0.5f + 0.5f) * 180.0f);
+		//return glm::vec4(normal * 0.5f + 0.5f, 1.0f);
 
-		return 0xff000000 | (lightShading << 16) | (lightShading << 8) | lightShading;
+		glm::vec3 sphereColor(1, 0, 0);
+		glm::vec3 shading = lightShading * sphereColor;
+
+		return glm::vec4(shading, 1.0f);
 	}
 	else
 	{
-		return 0x00000000;
+		return glm::vec4(0, 0, 0, 1);
 	}
 }
 

@@ -22,7 +22,7 @@ public:
 
 private:
 	uint32_t Rasterizer(glm::vec2 coord);
-	uint32_t PixelShader(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 lightDir);
+	glm::vec4 PixelShader(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 lightDir);
 
 private:
 	std::shared_ptr<Walnut::Image> m_FinalImage;
